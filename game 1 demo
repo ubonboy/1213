@@ -1,0 +1,35 @@
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'GameScene' });
+    }
+
+    preload() {
+        // ไม่ต้องโหลดรูปภาพ
+    }
+
+    create() {
+        // สร้างตัวละครผู้เล่น
+        this.player = this.add.graphics({
+            fillStyle: { color: 0x00ff00 },
+            lineStyle: { color: 0x000000, width: 2 }
+        });
+        this.player.fillCircle(100, 100, 20);
+
+        // สร้างการควบคุมผู้เล่นโดยการคลิก
+        this.input.on('pointerdown', (pointer) => {
+            // ย้ายตัวละครผู้เล่นไปยังตำแหน่งที่คลิก
+            this.tweens.add({
+                targets: this.player,
+                x: pointer.x,
+                y: pointer.y,
+                duration: 200,
+                ease: 'Linear',
+                repeat: 0
+            });
+        });
+    }
+
+    update() {
+        // อัพเดทเกม
+    }
+}
