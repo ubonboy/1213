@@ -1,0 +1,107 @@
+const Phaser = window.Phaser;
+
+class TitleScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'TitleScene' });
+    }
+
+    preload() {
+        this.load.image('sky1', 'sky3.png');
+        this.load.image('math worldlogo', 'math world.png');
+    }
+
+    create() {
+        this.add.image(700, 250, 'sky1');
+        this.add.image(700, 300, 'math worldlogo');
+
+        const backgroundText = this.add.text(700, 30, 'Welcome to My Game', {
+            fontSize: '32px',
+            fill: '#ffffff'
+        });
+        backgroundText.setOrigin(0.5);
+
+        const startButton = this.add.text(700, 500, 'Start Game', {
+            fontSize: '64px',
+            fill: '#00ff00'
+        });
+
+        startButton.setOrigin(0.5);
+        startButton.setInteractive();
+        startButton.on('pointerdown', () => {
+            this.scene.start('GameScene');
+        });
+    }
+}
+
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'GameScene' });
+    }
+
+    preload() {
+        this.load.image('player', 'player.png');
+    }
+
+    create() {
+        // สร้างตัวละครผู้เล่น
+        this.player = this.matter.add.sprite(100, 100, 'player'); // ใช้ this.matter แทน this.physics
+
+        // ตั้งค่าระบบ Matter.js
+        this.matter.world.setBounds(0, 0, 1400, 650); // แสดงขอบเขตของโลก
+        
+
+        // เพิ่มการตอบสนองต่อปุ่มคีย์บอร์ด
+        const cursors = this.input.keyboard.createCursorKeys();
+
+        this.input.keyboard.on('keydown-W', () => {
+            this.player.setVelocityY(-20);
+        });
+
+        this.input.keyboard.on('keydown-A', () => {
+            this.player.setVelocityX(-20);
+        });
+
+        this.input.keyboard.on('keydown-S', () => {
+            this.player.setVelocityY(20);
+        });
+
+        this.input.keyboard.on('keydown-D', () => {
+            this.player.setVelocityX(20);
+        });
+
+        // เมื่อปล่อยปุ่ม
+        this.input.keyboard.on('keyup', () => {
+            this.player.setVelocity(0);
+        });
+    }
+
+    update() {
+        // อัพเดทเกม
+    }
+}
+
+const config = {
+    width: 1400,
+    height: 650,
+    backgroundColor: '#333333',
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    scene: [TitleScene, GameScene],
+    physics: {
+        default: 'matter',
+        matter: {
+            debug: true, // เปิดโหมด debug
+        }
+    },
+    plugins: {
+        scene: [
+            {
+                plugin: PhaserMatterCollisionPlugin,
+                key: 'MatterCollision',
+                mapping: 'matterCollision'
+            }
+        ]
+    }
+};
+
+new Phaser.Game(config);
