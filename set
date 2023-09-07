@@ -1,0 +1,106 @@
+const Phaser = window.Phaser;
+
+class TitleScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'TitleScene' });
+    }
+
+    preload() {
+        this.load.image('sky1', 'sky1.png');
+        this.load.image('math worldlogo', 'math world.png');
+    }
+
+    create() {
+        this.add.image(300, 150, 'sky1');
+        this.add.image(350, 175, 'math worldlogo');
+
+        const backgroundText = this.add.text(350, 30, 'Welcome to My Game', {
+            fontSize: '32px',
+            fill: '#ffffff'
+        });
+        backgroundText.setOrigin(0.5);
+
+        const startButton = this.add.text(350, 300, 'Start Game', {
+            fontSize: '24px',
+            fill: '#00ff00'
+        });
+
+        startButton.setOrigin(0.5);
+        startButton.setInteractive();
+        startButton.on('pointerdown', () => {
+            this.scene.start('GameScene');
+        });
+    }
+}
+
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'GameScene' });
+    }
+
+    preload() {
+        this.load.image('sky1', 'sky1.png');
+        this.load.image('dune', 'dune.png'); // โหลดรูปภาพตัวละครผู้เล่น
+    }
+
+    create() {
+        const player = this.physics.add.sprite(100, 450, 'dune'); // เปลี่ยน 'dude' เป็น 'dune'
+
+        player.setBounce(0.2);
+        player.setCollideWorldBounds(true);
+
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('dune', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'turn',
+            frames: [{ key: 'dune', frame: 4 }],
+            frameRate: 20
+        });
+
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('dune', { start: 5, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
+    }
+
+    update() {
+        // อันดับการดำเนินงานเกม
+    }
+}
+
+const config = {
+    width: 650,
+    height: 326,
+    backgroundColor: '#333333',
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    scene: [TitleScene, GameScene],
+    scale: {
+        zoom: 2
+    },
+    physics: {
+        default: 'matter',
+        matter: {
+            debug: true,
+            gravity: { y: 0 }
+        }
+    },
+    plugins: {
+        scene: [
+            {
+                plugin: PhaserMatterCollisionPlugin,
+                key: 'MatterCollision',
+                mapping: 'matterCollision'
+            }
+        ]
+    }
+};
+
+new Phaser.Game(config);
