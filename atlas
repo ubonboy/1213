@@ -1,0 +1,3 @@
+ preload() {
+        this.load.atlas('player', 'assets/images/actermain.png', 'assets/images/actermain_atlas.json');
+    }
