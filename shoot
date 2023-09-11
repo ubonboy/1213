@@ -1,26 +1,226 @@
+const Phaser = window.Phaser;
 
-    shoot(x, y) {
+class TitleScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'TitleScene' });
+    }
+
+    preload() {
+        this.load.image('sky1', 'sky3.png');
+        this.load.image('math worldlogo', 'math world.png');
+    }
+
+    create() {
+        this.add.image(700, 250, 'sky1');
+        this.add.image(700, 300, 'math worldlogo');
+
+        const backgroundText = this.add.text(700, 30, 'Welcome to My Game', {
+            fontSize: '32px',
+            fill: '#ffffff'
+        });
+        backgroundText.setOrigin(0.5);
+
+        const startButton = this.add.text(700, 500, 'Start Game', {
+            fontSize: '64px',
+            fill: '#00ff00'
+        });
+
+        startButton.setOrigin(0.5);
+        startButton.setInteractive();
+        startButton.on('pointerdown', () => {
+            this.scene.start('GameScene');
+        });
+    }
+}
+
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'GameScene' });
+        this.clickX = 0; // ค่า X ที่คลิก
+        this.clickY = 0; // ค่า Y ที่คลิก
+        this.arrow = null;
        
-        const arrow = this.matter.add.image(this.player.x, this.player.y, 'arrow');
+    }
 
-    // คำนวณทิศทางของการยิงไปยังจุดที่คลิก
-    const angle = Phaser.Math.Angle.Between(arrow.x, arrow.y, x, y);
+    preload() {
+        this.load.image('player', 'player.png');
+        this.load.image('arrow', 'arrow.png');
+    }
 
-    // ตั้งค่าความเร็วของการเคลื่อนที่
-    const speed = 300; // ปรับความเร็วตามความเหมาะสม
+    create() {
+        // สร้างตัวละครผู้เล่น
+        this.player = this.matter.add.sprite(100, 100, 'player'); // ใช้ this.matter แทน this.physics
+        this.player.setFixedRotation(true);
+        
+        this.matter.world.setBounds(0, 0, 1400, 650); // แสดงขอบเขตของโลก
+        
+        // สร้างแอนิเมชันสำหรับการเดิน
+        this.anims.create({
+            key: 'walk-up',
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+            frameRate: 50,
+            repeat: -1
+        });
 
-    // กำหนดความเร็วในทิศทางที่คำนวณได้
-    this.physics.velocityFromAngle(angle, speed, arrow.body.velocity);
+        this.anims.create({
+            key: 'walk-down',
+            frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
+            frameRate: 50,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'walk-left',
+            frames: this.anims.generateFrameNumbers('player', { start: 8, end: 11 }),
+            frameRate: 50,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'walk-right',
+            frames: this.anims.generateFrameNumbers('player', { start: 12, end: 15 }),
+            frameRate: 50,
+            repeat: -1
+        });
+
+        // เพิ่มการตอบสนองต่อปุ่มคีย์บอร์ด
+        const speed = 20; // ปรับความเร็วตามความเหมาะสม
+
+        this.input.keyboard.on('keydown-W', () => {
+            this.player.setVelocityY(-speed);
+            this.player.anims.play('walk-up', true);
+          
+        });
+        
+
+    
+
+        this.input.keyboard.on('keydown-A', () => {
+            this.player.setVelocityX(-speed);
+            this.player.anims.play('walk-left', true);
+        });
+
+        this.input.keyboard.on('keydown-S', () => {
+            this.player.setVelocityY(speed);
+            this.player.anims.play('walk-down', true);
+        });
+
+        this.input.keyboard.on('keydown-D', () => {
+            this.player.setVelocityX(speed);
+            this.player.anims.play('walk-right', true);
+        });
+       
+
+        // เมื่อปล่อยปุ่ม
+        this.input.keyboard.on('keyup', () => {
+            this.player.setVelocity(-1);
+            this.player.anims.stop();
+        });
+        
+        if (this.player.anims.currentAnim) {
+            this.player.setFrame(this.player.anims.currentAnim.frames[0]);
+        }
+
+       
+        this.arrow = this.matter.add.image(this.player.x, this.player.y, 'arrow');
+
+        
+
+    // ตั้งเวลาให้ arrow ระเบิดหายไปหลังจาก 3 วินาที (3000 มิลลิวินาที)
+    
+    this.input.on('pointerdown', (pointer) => {
+        this.clickX = pointer.x;
+        this.clickY = pointer.y;
+    
+        // เรียกใช้ฟังก์ชันยิงเมื่อคลิก
+        this.shoot(this.clickX, this.clickY);
+    });
+   
 
     this.time.addEvent({
         delay: 3000, // 3 วินาที
         callback: () => {
             // เรียกใช้ฟังก์ชันเพื่อทำให้ arrow หายไป
-            this.explodeArrow(arrow);
+            this.explodeArrow();
         },
-        loop: false // ให้เรียกฟังก์ชันเพียงครั้งเดียว
+       
+        loop: true // ให้เรียกฟังก์ชันเพียงครั้งเดียว
     });
-
-    arrow.destroy();
-    
+  
     }
+
+    shoot(x, y) {
+        // ก่อนที่จะสร้าง arrow ใหม่ ตรวจสอบว่ามี arrow ก่อนหน้านี้หรือไม่
+        if (this.arrow) {
+            // ถ้ามี arrow ก่อนหน้า ให้ทำให้ arrow นั้นหายไป
+            this.arrow.destroy();
+        }
+
+        // สร้างอ็อบเจกต์ arrow ใหม่
+        this.arrow = this.matter.add.image(this.player.x, this.player.y, 'arrow');
+
+        // ย้ายวัตถุไปยังตำแหน่งที่คลิก
+        this.arrow.setPosition(x, y);
+        
+        // เมื่อ arrow ชนกับอะไรก็ตาม ให้ทำให้ arrow หายไป
+        this.matterCollision.addOnCollideStart({
+            objectA: this.arrow,
+            callback: (collision) => {
+                // ทำให้ arrow หายไป
+                this.arrow.destroy();
+            },
+        });
+    }
+    
+
+    explodeArrow() {
+        if (this.arrow && this.arrow.active) {
+            this.arrow.destroy();
+        }
+    }
+   
+    
+    
+    
+    
+    update() {
+        // อัพเดทเกม
+
+        
+        
+        
+            
+        }
+        
+        
+}    
+
+
+
+
+const config = {
+    width: 1400,
+    height: 650,
+    backgroundColor: '#333333',
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    scene: [TitleScene, GameScene],
+    physics: {
+        default: 'matter',
+        matter: {
+            debug: true, // เปิดโหมด debug
+        }
+    },
+    plugins: {
+        scene: [
+            {
+                plugin: PhaserMatterCollisionPlugin,
+                key: 'MatterCollision',
+                mapping: 'matterCollision'
+            }
+        ]
+    }
+};
+
+new Phaser.Game(config);
+    
