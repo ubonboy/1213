@@ -1,0 +1,26 @@
+
+    shoot(x, y) {
+       
+        const arrow = this.matter.add.image(this.player.x, this.player.y, 'arrow');
+
+    // คำนวณทิศทางของการยิงไปยังจุดที่คลิก
+    const angle = Phaser.Math.Angle.Between(arrow.x, arrow.y, x, y);
+
+    // ตั้งค่าความเร็วของการเคลื่อนที่
+    const speed = 300; // ปรับความเร็วตามความเหมาะสม
+
+    // กำหนดความเร็วในทิศทางที่คำนวณได้
+    this.physics.velocityFromAngle(angle, speed, arrow.body.velocity);
+
+    this.time.addEvent({
+        delay: 3000, // 3 วินาที
+        callback: () => {
+            // เรียกใช้ฟังก์ชันเพื่อทำให้ arrow หายไป
+            this.explodeArrow(arrow);
+        },
+        loop: false // ให้เรียกฟังก์ชันเพียงครั้งเดียว
+    });
+
+    arrow.destroy();
+    
+    }
